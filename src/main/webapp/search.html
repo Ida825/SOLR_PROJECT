@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="jquery-3.1.0.min.js"></script>
+<script type="text/javascript">
+
+	function clickQuery(typename){
+		var foodname=$("input[name='keyWord']").val();
+		$.ajax({
+			url:"searchFoodMulti",
+			data:"keyWord="+foodname+"&typename="+typename,
+			dataType:"json",
+			success:function(jd){
+				$("div[name='c']").remove();
+				for(var i=0;i<jd.length;i++){
+					var html="<div name='c'>"+
+					"<h3>"+jd[i].foodname+"("+jd[i].typename+")</h3>"+
+					"<span>"+jd[i].foodname+"价格是："+jd[i].price+"</span>"+
+					"<hr>"+
+					"</div>";
+					$("#foodDiv").append(html);
+				}
+			}	
+		});
+	}
+	
+
+	$(function(){
+		var inputObj=$("input[name='keyWord']");
+		//给文本框添加事件
+		inputObj.bind("keyup",function(event){
+			//当文本框中没有内容时清空分组的值
+			if(event.keyCode==8){
+				if(inputObj.val()==""){
+					$("a[name='list']").remove();
+				}
+			}
+			
+			//获取文本框的位置
+			var offset=inputObj.offset();
+			var x = offset.left;
+			var y = offset.top;
+			//设置div的位置
+			//x轴跟文本框的x值一样
+			var divx = x;
+			//y轴=文本框的高+文本框的y轴值
+			var divy = inputObj.height()+y;
+			$("#showFacetDiv").css("left",divx);
+			$("#showFacetDiv").css("top",divy+10);
+			//也可以将jQuery对象转成dom元素 
+			/* $("#showFacetDiv")[0].style.left=divx;
+			$("#showFacetDiv")[0].style.top=divy; */
+			$("#showFacetDiv").css("position","absolute");
+			$("#showFacetDiv").show();
+			//发起ajax搜索索引($.getJSON)
+			$.ajax({		
+				url:"facetFood",
+				data:'keyWord='+inputObj.val(),
+				dataType:"json",
+				success:function(data){
+					$("a[name='list']").remove();
+					var html="";
+					for(var i=0;i<data.length;i++){
+						//每次取出的对象就是一个map对象 
+						var map=data[i];
+						for(var key in map){
+							//从取出的map中获取分组的值 
+							var value=map[key];							
+							html+="<a name='list' href='javascript:clickQuery(\""+key+"\")'>"+key+"["+value+"]<br></a>";			
+						}						
+					}
+					$("#showFacetDiv").append(html);
+				}
+			}); 
+		});
+		
+		// 隐藏 div
+		$(document).click(function(){
+			$("#showFacetDiv").hide();	
+		}) 
+		
+		$("#searchBt").click(function(){
+			$.ajax({
+				url:'searchFood',
+				data:'keyWord='+$("input[name='keyWord']").val(),
+				dataType:'json',
+				success:function(jd){
+					$("div[name='c']").remove();
+					//集合转成json  就是数组 遍历数组 
+					for(var i=0;i<jd.length;i++){
+						var html="<div name='c'>"+
+						"<h3>"+jd[i].foodname+"("+jd[i].typename+")</h3>"+
+						"<span>"+jd[i].foodname+"价格是："+jd[i].price+"</span>"+
+						"<hr>"+
+						"</div>";
+						$("#foodDiv").append(html);
+					}
+				}
+			});
+		})
+		
+	})
+</script>
+</head>
+<body>
+	<img src="baidu.png"><br/>
+	<input type="text" name="keyWord" style="width:200px;height:18px;"/><input id="searchBt" type="button" value="百度一下"/>
+	<div id="foodDiv">
+	
+	</div>
+	
+	<div id="showFacetDiv" style="border:1px solid black;position: absolute;z-index:100;width:200px;height:300px;display: none;left:8px;top:120px;">
+		
+	</div>
+</body>
+</html>
